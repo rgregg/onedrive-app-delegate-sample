@@ -21,7 +21,7 @@ namespace OAuth2
             this.RedirectUri = redirectUri;
         }
 
-        public async Task<OAuth2Token> RedeemRefreshTokenAsync(string refreshToken)
+        public async Task<OAuth2Token> RedeemRefreshTokenAsync(string refreshToken, string resource = null)
         {
             var queryBuilder = new QueryStringBuilder { StartCharacter = null };
 
@@ -37,11 +37,15 @@ namespace OAuth2
             {
                 queryBuilder.Add("client_secret", this.ClientSecret);
             }
+            if (!string.IsNullOrEmpty(resource))
+            {
+                queryBuilder.Add("resource", resource);
+            }
 
             return await PostToTokenEndPoint(queryBuilder);
         }
 
-        public async Task<OAuth2Token> RedeemAuthorizationCodeAsync(string authCode)
+        public async Task<OAuth2Token> RedeemAuthorizationCodeAsync(string authCode, string resource = null)
         {
             var queryBuilder = new QueryStringBuilder { StartCharacter = null };
 
@@ -56,6 +60,10 @@ namespace OAuth2
             if (!string.IsNullOrEmpty(this.ClientSecret))
             {
                 queryBuilder.Add("client_secret", this.ClientSecret);
+            }
+            if (!string.IsNullOrEmpty(resource))
+            {
+                queryBuilder.Add("resource", resource);
             }
 
             return await PostToTokenEndPoint(queryBuilder);
@@ -83,42 +91,105 @@ namespace OAuth2
             {
                 httpResponse = webex.Response as HttpWebResponse;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return null;
+                throw new OAuth2Exception("Http request error.", ex);
             }
 
             if (httpResponse == null)
             {
-                return null;
+                throw new OAuth2Exception("Http response was null");
             }
 
             try
             {
                 if (httpResponse.StatusCode != HttpStatusCode.OK)
                 {
-                    return null;
+                    if (httpResponse.ContentType.StartsWith("application/json"))
+                    {
+                        var errorDetails = await ParseResponseJson<AzureActiveDirectoryErrorResponse>(httpResponse);
+                        if (errorDetails != null)
+                        {
+                            throw new OAuth2Exception(errorDetails.Description) { Details = errorDetails };
+                        }
+                        else
+                        {
+                            throw new OAuth2Exception(
+                                "Http response was invalid: statusCode=" + httpResponse.StatusCode);
+                        }
+                    }
                 }
 
-                using (var responseBodyStreamReader = new StreamReader(httpResponse.GetResponseStream()))
-                {
-                    var responseBody = await responseBodyStreamReader.ReadToEndAsync();
-                    var tokenResult = Newtonsoft.Json.JsonConvert.DeserializeObject<OAuth2Token>(responseBody);
-
-                    httpResponse.Dispose();
-                    return tokenResult;
-                }
+                return await ParseResponseJson<OAuth2Token>(httpResponse);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return null;
+                throw new OAuth2Exception("General error occured.", ex);
             }
             finally
             {
                 httpResponse.Dispose();
             }
         }
+
+        private async Task<T> ParseResponseJson<T>(HttpWebResponse httpResponse)
+        {
+            using (var responseBodyStreamReader = new StreamReader(httpResponse.GetResponseStream()))
+            {
+                var responseBody = await responseBodyStreamReader.ReadToEndAsync();
+                var tokenResult = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseBody);
+
+                httpResponse.Dispose();
+                return tokenResult;
+            }
+        }
     }
+
+   
+
+    public class OAuth2Exception : Exception
+    {
+
+        public OAuth2Exception()
+        {
+
+        }
+
+        public OAuth2Exception(string message) : base(message)
+        {
+
+        }
+
+        public OAuth2Exception(string message, Exception innerException)
+            : base(message, innerException)
+        {
+
+        }
+
+        public AzureActiveDirectoryErrorResponse Details { get; set; }
+    }
+
+    public class AzureActiveDirectoryErrorResponse
+    {
+        [JsonProperty("correlation_id")]
+        public string CorrelationId { get; set; }
+
+        [JsonProperty("error")]
+        public string Error { get; set; }
+
+        [JsonProperty("error_codes")]
+        public long[] ErrorCodes { get; set; }
+
+        [JsonProperty("error_description")]
+        public string Description { get; set; }
+
+        [JsonProperty("timestamp")]
+        public DateTimeOffset Timestamp { get; set; }
+
+        [JsonProperty("trace_id")]
+        public string TraceId { get; set; }
+    }
+
 
     public class OAuth2Token
     {

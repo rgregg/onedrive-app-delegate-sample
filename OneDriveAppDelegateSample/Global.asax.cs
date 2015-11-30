@@ -13,5 +13,6 @@ namespace OneDriveAppDelegateSample
         {
             GlobalConfiguration.Configure(WebApiConfig.Register);
         }
+
     }
 }

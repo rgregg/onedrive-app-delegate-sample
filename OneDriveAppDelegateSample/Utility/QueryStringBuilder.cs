@@ -61,9 +61,16 @@ namespace OAuth2
             get { return parameters.Keys.ToArray(); }
         }
 
-        public void Add(string key, string value)
+        public void Add(string key, string value, bool encodeValue = true)
         {
-            parameters[key] = value;
+            if (encodeValue)
+            {
+                parameters[key] = Uri.EscapeDataString(value);
+            }
+            else
+            {
+                parameters[key] = value;
+            }
         }
 
         public void Remove(string key)
@@ -83,7 +90,7 @@ namespace OAuth2
 
                 sb.Append(param.Key);
                 sb.Append('=');
-                sb.Append(Uri.EscapeDataString(param.Value));
+                sb.Append(param.Value);
             }
             return sb.ToString();
         }

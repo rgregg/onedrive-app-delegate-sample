@@ -9,6 +9,8 @@ using OAuth2;
 using System.Net.Http.Headers;
 using System.Collections.Specialized;
 using System.Web;
+using Newtonsoft.Json.Linq;
+using System.Net.Http.Formatting;
 
 namespace OneDriveAppDelegateSample.Controllers
 {
@@ -19,94 +21,75 @@ namespace OneDriveAppDelegateSample.Controllers
 
         public static string ClientSecret { get { return "tB6PB/O/nyEUnMrj5WFVNWFOzOiM/g0ehEInpqA5mOI="; } }
 
-        public static string RedirectUri { get { return "https://onedrive-app-delegate.azurewebsites.net/authredirect"; } }
+        public static string RedirectUri { get { return "http://localhost:2007/adminauthresponse"; } }
+
+        public static string TokenServiceUri
+        {
+            get { return "https://login.microsoftonline.com/common/oauth2/token"; }
+        }
+
+        public static string AuthorizationServiceUri
+        {
+            get { return "https://login.microsoftonline.com/common/oauth2/authorize"; }
+        }
+
     }
 
     public class OAuth2ResponseController : ApiController
     {
 
-        private static string TokenServiceUri = "https://login.microsoftonline.com/common/oauth2/token";
-        private static string AuthorizationServiceUri = "https://login.microsoftonline.com/common/oauth2/authorize";
+        /// <summary>
+        /// Convert form data into a name value collection
+        /// </summary>
+        /// <param name="formData"></param>
+        /// <returns></returns>
+        private static NameValueCollection ConvertFormData(FormDataCollection formData)
+        {
+            IEnumerator<KeyValuePair<string, string>> pairs = formData.GetEnumerator();
+            NameValueCollection collection = new NameValueCollection();
+            while (pairs.MoveNext())
+            {
+                KeyValuePair<string, string> pair = pairs.Current;
+                collection.Add(pair.Key, pair.Value);
+            }
+            return collection;
+        }
 
-        private static string CookiePassword = "";
 
-        [HttpGet, Route("authredirect")]
-        public async Task<IHttpActionResult> AuthRedirect(string code)
+
+        [HttpPost, Route("adminauthresponse")]
+        public HttpResponseMessage AdminAuthRedirect(FormDataCollection formData)
         {
             // Redeem authorization code for account information
+            var values = ConvertFormData(formData);
 
-            OAuth2Helper helper = new OAuth2Helper(TokenServiceUri,
-                OneDriveAppConfiguration.ClientId,
-                OneDriveAppConfiguration.ClientSecret,
-                OneDriveAppConfiguration.RedirectUri);
+            var idToken = values["id_token"];
 
-            var token = await helper.RedeemAuthorizationCodeAsync(code);
-            if (null == token)
-            {
-                // No token means we had an error when redeeming the token, so let's figure out what to do about it.
-                return null;
-            }
+            JWT.JsonWebToken.JsonSerializer = new Utility.CustomJsonSerializer();
+            var openIdToken = JWT.JsonWebToken.DecodeToObject<Models.OpenIdToken>(idToken, "", false);
+            
+            // App is now authorized, and we can use the tenant ID to get access tokens
+            var message = new HttpResponseMessage(HttpStatusCode.Found);
+            message.Headers.Location = new Uri("/", UriKind.Relative);
 
-            // Otherwise, if we got a token back, then we should set a secure cookie and use that from now on.
-            return null;
+            var cookie = Utility.TokenStore.CookieForToken(openIdToken);
+            message.Headers.AddCookies(new CookieHeaderValue[] { cookie });
+            return message;
         }
 
 
         [HttpGet, Route("signout")]
         public HttpResponseMessage SignOut()
         {
-            var message = new HttpResponseMessage(HttpStatusCode.Redirect);
-            message.Headers.Add("Location", "/");
-            message.Headers.AddCookies(new CookieHeaderValue[] { CookieForAccount(null) });
+            var cookie = Utility.TokenStore.CookieForToken(null);
 
-            return message;
+            var response = new HttpResponseMessage(HttpStatusCode.Redirect);
+            response.Headers.Location = new Uri("/", UriKind.Relative);
+            response.Headers.AddCookies(new CookieHeaderValue[] { cookie });
+            return response;
         }
 
-        public static CookieHeaderValue CookieForAccount(Models.OneDriveAccount account)
-        {
-            var nv = new NameValueCollection();
-            nv["id"] = null != account ? account.Id.Encrypt(CookiePassword) : "";
-
-            var cookie = new CookieHeaderValue("session", nv);
-            cookie.Secure = true;
-            cookie.HttpOnly = true;
-            cookie.Expires = null != account ? DateTimeOffset.Now.AddMinutes(120) : DateTimeOffset.Now;
-            cookie.Path = "/";
-
-            return cookie;
-        }
-
-        public static async Task<Models.OneDriveAccount> AccountFromCookie(HttpCookieCollection cookies)
-        {
-            var sessionCookie = cookies["session"];
-            if (null == sessionCookie)
-                return null;
-
-            return await AccountFromCookie(sessionCookie.Values, true);
-        }
-
-        public static async Task<Models.OneDriveAccount> AccountFromCookie(NameValueCollection storedCookieValue, bool shouldDecode)
-        {
-            string accountId = null;
-            string encryptedAccountId = storedCookieValue["id"];
-            if (shouldDecode && null != encryptedAccountId)
-            {
-                encryptedAccountId = HttpUtility.UrlDecode(encryptedAccountId);
-            }
-
-            if (null != encryptedAccountId)
-            {
-                accountId = encryptedAccountId.Decrypt(WebAppConfig.Default.CookiePassword);
-            }
-
-            if (null != accountId)
-            {
-                var account = await AzureStorage.LookupAccountAsync(accountId);
-                return account;
-            }
-
-            return null;
-        }
+        
 
     }
 }
