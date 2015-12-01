@@ -21,7 +21,17 @@ namespace OneDriveAppDelegateSample.Controllers
 
         public static string ClientSecret { get { return "tB6PB/O/nyEUnMrj5WFVNWFOzOiM/g0ehEInpqA5mOI="; } }
 
-        public static string RedirectUri { get { return "http://localhost:2007/adminauthresponse"; } }
+        public static string RedirectUri
+        {
+            get
+            {
+#if DEBUG
+                return "http://localhost:2007/adminauthresponse";
+#else
+                return "https://onedrive-app-delegate.azurewebsites.net/adminauthresponse";
+#endif
+            }
+        }
 
         public static string TokenServiceUri
         {
