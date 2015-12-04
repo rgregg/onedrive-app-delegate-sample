@@ -16,12 +16,41 @@ namespace OneDriveAppDelegateSample
             Page.RegisterAsyncTask(asynctask);
         }
 
+        private static bool UseDogfoodEnvironemnt(HttpRequest request, HttpResponse response)
+        {
+            string ppeQueryString = request.QueryString["ppe"];
+            if (ppeQueryString == null)
+            {
+                var cookie = request.Cookies["ppe"];
+                if (cookie != null)
+                {
+                    string storedValue = cookie.Value;
+                    if (storedValue != null && storedValue.Equals("true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            bool useDogfood = false;
+            if (ppeQueryString.Equals("1"))
+            {
+                useDogfood = true;
+            }
+
+            // Set a cookie to store this preference
+            response.Cookies.Add(new HttpCookie("ppe", useDogfood.ToString()));
+            return useDogfood;
+        }
+
         private async Task PageLoadAsync()
         {
+            bool useDogfood = UseDogfoodEnvironemnt(Request, Response);
             var storedToken = Utility.TokenStore.TokenFromCookie(Request.Cookies);
             if (null == storedToken || string.IsNullOrEmpty(storedToken.TenantId))
             {
-                signInLink.NavigateUrl = GenerateLoginUrl();
+                signInLink.NavigateUrl = GenerateLoginUrl(useDogfood);
                 panelSignIn.Visible = true;
                 panelAuthenticated.Visible = false;
             }
@@ -29,19 +58,19 @@ namespace OneDriveAppDelegateSample
             {
                 panelSignIn.Visible = false;
                 panelAuthenticated.Visible = true;
-
-                accessToken.Text = await GenerateAccessTokenAsync(storedToken.TenantId);
             }
         }
 
-        private string GenerateLoginUrl()
+        private string GenerateLoginUrl(bool useDogfood)
         {
-            var baseUrl = Controllers.OneDriveAppConfiguration.AuthorizationServiceUri;
+            IAppConfig app = useDogfood ? new DogfoodAppConfig() : new ProductionAppConfig();
+
+            var baseUrl = app.AuthorizationServiceUri;
             OAuth2.QueryStringBuilder builder = new OAuth2.QueryStringBuilder();
-            builder.Add("client_id", Controllers.OneDriveAppConfiguration.ClientId);
+            builder.Add("client_id", app.ClientId);
             builder.Add("response_type", "code+id_token", false);
             builder.Add("scope", "openid");
-            builder.Add("redirect_uri", Controllers.OneDriveAppConfiguration.RedirectUri);
+            builder.Add("redirect_uri", app.RedirectUri);
             builder.Add("prompt", "admin_consent");
             builder.Add("nonce", Guid.NewGuid().ToString());
             builder.Add("response_mode", "form_post");
@@ -51,10 +80,19 @@ namespace OneDriveAppDelegateSample
 
         private async Task<string> GenerateAccessTokenAsync(string tenantId)
         {
-            var token = await Utility.AuthHelper.GetAccessTokenAsync(tenantId, "https://seattleappworks.sharepoint.com");
+            bool useDogfood = UseDogfoodEnvironemnt(Request, Response);
+            var token = await Utility.AuthHelper.GetAccessTokenAsync(tenantId, "https://seattleappworks.sharepoint.com", useDogfood);
             return token;
         }
 
+        protected async void buttonGetAccessToken_Click(object sender, EventArgs e)
+        {
+            bool useDogfood = UseDogfoodEnvironemnt(Request, Response);
+            var targetResourceUri = textBoxResourceUri.Text;
+            var storedToken = Utility.TokenStore.TokenFromCookie(Request.Cookies);
 
+            var token = await Utility.AuthHelper.GetAccessTokenAsync(storedToken.TenantId, targetResourceUri, useDogfood);
+            accessToken.Text = token;
+        }
     }
 }

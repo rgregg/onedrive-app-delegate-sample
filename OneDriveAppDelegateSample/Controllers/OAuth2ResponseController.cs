@@ -15,36 +15,6 @@ using System.Net.Http.Formatting;
 namespace OneDriveAppDelegateSample.Controllers
 {
 
-    public static class OneDriveAppConfiguration
-    {
-        public static string ClientId { get { return "bd9da400-84c8-4ed5-9479-2f192b206f7c"; } }
-
-        public static string ClientSecret { get { return "tB6PB/O/nyEUnMrj5WFVNWFOzOiM/g0ehEInpqA5mOI="; } }
-
-        public static string RedirectUri
-        {
-            get
-            {
-#if DEBUG
-                return "http://localhost:2007/adminauthresponse";
-#else
-                return "https://onedrive-app-delegate.azurewebsites.net/adminauthresponse";
-#endif
-            }
-        }
-
-        public static string TokenServiceUri
-        {
-            get { return "https://login.microsoftonline.com/common/oauth2/token"; }
-        }
-
-        public static string AuthorizationServiceUri
-        {
-            get { return "https://login.microsoftonline.com/common/oauth2/authorize"; }
-        }
-
-    }
-
     public class OAuth2ResponseController : ApiController
     {
 

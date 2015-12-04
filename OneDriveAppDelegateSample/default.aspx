@@ -17,7 +17,12 @@
         </asp:Panel>
         
         <asp:Panel runat="server" ID="panelAuthenticated">
-            <p>You've authenticated this app to work in your tenant. Great. Now let's do something with your access token.</p>
+            <p>You've authenticated this app to work in your tenant. Great.</p>
+            
+            <p>
+                Now we need an access token to actually make APIs for your app. Enter the resource URL you are attempting to access:<br />
+                <asp:TextBox runat="server" ID="textBoxResourceUri" Width="500px" Text="https://graph.microsoft.com"></asp:TextBox><asp:Button runat="server" ID="buttonGetAccessToken" Text="Request token" OnClick="buttonGetAccessToken_Click" />
+            </p>
             
             <asp:TextBox runat="server" ID="accessToken" Font-Names="Consolas" Height="128px" TextMode="MultiLine" Width="591px"></asp:TextBox>
         </asp:Panel>

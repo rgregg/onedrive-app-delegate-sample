@@ -10,9 +10,11 @@ namespace OneDriveAppDelegateSample.Utility
 {
     public static class AuthHelper
     {
-        public static async Task<string> GetAccessTokenAsync(string tenantId, string resource)
+        public static async Task<string> GetAccessTokenAsync(string tenantId, string resource, bool useDogfood)
         {
-            string authority = Controllers.OneDriveAppConfiguration.AuthorizationServiceUri.Replace("common", tenantId);
+            IAppConfig app = useDogfood ? new DogfoodAppConfig() : new ProductionAppConfig();
+
+            string authority = app.AuthorizationServiceUri.Replace("common", tenantId);
             AuthenticationContext authContext = new AuthenticationContext(authority, false);
 
             X509Certificate2 cert = new X509Certificate2(
@@ -22,7 +24,7 @@ namespace OneDriveAppDelegateSample.Utility
                 X509KeyStorageFlags.MachineKeySet);
 
             ClientAssertionCertificate cac =
-                new ClientAssertionCertificate(Controllers.OneDriveAppConfiguration.ClientId, cert);
+                new ClientAssertionCertificate(app.ClientId, cert);
 
             var authenticationResult = await authContext.AcquireTokenAsync(resource, cac);
 
