@@ -5,15 +5,21 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <title></title>
+    <style type="text/css">
+        body {
+            font-family: 'Segoe UI', sans-serif;
+        }
+    </style>
 </head>
 <body>
     <form id="form1" runat="server">
         <h1>OneDrive App Delegated Permissions Sample</h1>
         <p>This sample uses app delegated permissions to access tenent data without requiring every user to sign into the application.</p>
+        <asp:Label runat="server" ID="labelServiceTarget">Target: Production</asp:Label>
     
         <asp:Panel runat="server" ID="panelSignIn">
-            <p>To get started, you need to sign into this application and authorize it to access your tenant using a tenant admin account.<br />
-                <asp:HyperLink runat="server" ID="signInLink">Enroll my tenant</asp:HyperLink></p>    
+            <p>To get started, you need to sign into this application and authorize it to access your tenant using a tenant admin account.</p>
+            <asp:HyperLink runat="server" ID="signInLink">Sign in and enroll my tenant</asp:HyperLink>
         </asp:Panel>
         
         <asp:Panel runat="server" ID="panelAuthenticated">
@@ -24,7 +30,7 @@
                 <asp:TextBox runat="server" ID="textBoxResourceUri" Width="500px" Text="https://graph.microsoft.com"></asp:TextBox><asp:Button runat="server" ID="buttonGetAccessToken" Text="Request token" OnClick="buttonGetAccessToken_Click" />
             </p>
             
-            <asp:TextBox runat="server" ID="accessToken" Font-Names="Consolas" Height="128px" TextMode="MultiLine" Width="591px"></asp:TextBox>
+            <asp:TextBox runat="server" ID="accessToken" Font-Names="Consolas" Height="230px" TextMode="MultiLine" Width="627px"></asp:TextBox>
         </asp:Panel>
     </form>
 </body>

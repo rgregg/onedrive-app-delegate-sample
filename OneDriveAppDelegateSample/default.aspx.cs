@@ -59,6 +59,7 @@ namespace OneDriveAppDelegateSample
                 panelSignIn.Visible = false;
                 panelAuthenticated.Visible = true;
             }
+            labelServiceTarget.Text = "Target: " + (useDogfood ? "Dogfood" : "Production");
         }
 
         private string GenerateLoginUrl(bool useDogfood)
@@ -78,21 +79,22 @@ namespace OneDriveAppDelegateSample
             return baseUrl + builder.ToString();
         }
 
-        private async Task<string> GenerateAccessTokenAsync(string tenantId)
-        {
-            bool useDogfood = UseDogfoodEnvironemnt(Request, Response);
-            var token = await Utility.AuthHelper.GetAccessTokenAsync(tenantId, "https://seattleappworks.sharepoint.com", useDogfood);
-            return token;
-        }
-
         protected async void buttonGetAccessToken_Click(object sender, EventArgs e)
         {
             bool useDogfood = UseDogfoodEnvironemnt(Request, Response);
             var targetResourceUri = textBoxResourceUri.Text;
             var storedToken = Utility.TokenStore.TokenFromCookie(Request.Cookies);
 
-            var token = await Utility.AuthHelper.GetAccessTokenAsync(storedToken.TenantId, targetResourceUri, useDogfood);
-            accessToken.Text = token;
+            try
+            {
+                var token =
+                    await Utility.AuthHelper.GetAccessTokenAsync(storedToken.TenantId, targetResourceUri, useDogfood);
+                accessToken.Text = token;
+            }
+            catch (Exception ex)
+            {
+                accessToken.Text = ex.ToString();
+            }
         }
     }
 }
