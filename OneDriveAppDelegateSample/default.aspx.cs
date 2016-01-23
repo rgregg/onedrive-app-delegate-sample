@@ -46,6 +46,13 @@ namespace OneDriveAppDelegateSample
 
         private async Task PageLoadAsync()
         {
+            if (Request.QueryString["logout"] == "1")
+            {
+                Response.SetCookie(new HttpCookie(Utility.TokenStore.TokenCookieName, ""));
+                Response.Redirect("~/");
+                return;
+            }
+
             bool useDogfood = UseDogfoodEnvironemnt(Request, Response);
             var storedToken = Utility.TokenStore.TokenFromCookie(Request.Cookies);
             if (null == storedToken || string.IsNullOrEmpty(storedToken.TenantId))
@@ -87,8 +94,8 @@ namespace OneDriveAppDelegateSample
 
             try
             {
-                var token =
-                    await Utility.AuthHelper.GetAccessTokenAsync(storedToken.TenantId, targetResourceUri, useDogfood);
+                Models.AccessTokens tokenCache = Models.AccessTokens.AccessTokensForToken(storedToken);
+                var token = await tokenCache.GetAccessTokenForResourceAsync(targetResourceUri, useDogfood);
                 accessToken.Text = token;
             }
             catch (Exception ex)

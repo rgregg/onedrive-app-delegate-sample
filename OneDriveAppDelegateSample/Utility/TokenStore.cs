@@ -5,11 +5,16 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
+using System.Net.Http;
+
 
 namespace OneDriveAppDelegateSample.Utility
 {
     public static class TokenStore
     {
+        internal const string TokenCookieName = "session";
+        internal const string TokenFieldName = "id";
+
         private static readonly Dictionary<string, Models.OpenIdToken> CachedTokens =
             new Dictionary<string, Models.OpenIdToken>();
 
@@ -24,10 +29,12 @@ namespace OneDriveAppDelegateSample.Utility
             }
 
             var nv = new NameValueCollection();
-            nv["id"] = lookupId;
+            nv[TokenFieldName] = lookupId;
 
-            var cookie = new CookieHeaderValue("session", nv);
-            //cookie.Secure = true;
+            var cookie = new CookieHeaderValue(TokenCookieName, nv);
+#if !DEBUG
+            cookie.Secure = true;
+#endif
             cookie.HttpOnly = true;
             cookie.Expires = DateTimeOffset.Now.AddMinutes(120);
             cookie.Path = "/";
@@ -37,16 +44,22 @@ namespace OneDriveAppDelegateSample.Utility
 
         public static Models.OpenIdToken TokenFromCookie(HttpCookieCollection cookies)
         {
-            var sessionCookie = cookies["session"];
+            var sessionCookie = cookies[TokenCookieName];
             if (null == sessionCookie)
                 return null;
 
             return TokenFromCookie(sessionCookie.Values, true);
         }
 
+        public static Models.OpenIdToken TokenFromCookie(HttpRequestHeaders headers)
+        {
+            CookieHeaderValue sessionCookie = headers.GetCookies(TokenCookieName).FirstOrDefault();
+            return TokenFromCookie(sessionCookie[TokenCookieName].Values, true);
+        }
+
         public static Models.OpenIdToken TokenFromCookie(NameValueCollection storedCookieValue, bool shouldDecode)
         {
-            string storedValue = storedCookieValue["id"];
+            string storedValue = storedCookieValue[TokenFieldName];
             if (shouldDecode && null != storedValue)
             {
                 storedValue = HttpUtility.UrlDecode(storedValue);

@@ -8,9 +8,9 @@ using System.Web;
 
 namespace OneDriveAppDelegateSample.Utility
 {
-    public static class AuthHelper
+    internal static class AuthHelper
     {
-        public static async Task<string> GetAccessTokenAsync(string tenantId, string resource, bool useDogfood)
+        public static async Task<Models.CachedAccessToken> GetAccessTokenAsync(string tenantId, string resource, bool useDogfood)
         {
             IAppConfig app = useDogfood ? new DogfoodAppConfig() : new ProductionAppConfig();
 
@@ -27,9 +27,7 @@ namespace OneDriveAppDelegateSample.Utility
                 new ClientAssertionCertificate(app.ClientId, cert);
 
             var authenticationResult = await authContext.AcquireTokenAsync(resource, cac);
-
-            string accessToken = authenticationResult.AccessToken;
-            return accessToken;
+            return new Models.CachedAccessToken(authenticationResult.AccessToken, authenticationResult.ExpiresOn);
         }
 
     }

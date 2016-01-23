@@ -36,7 +36,6 @@ namespace OneDriveAppDelegateSample.Controllers
         }
 
 
-
         [HttpPost, Route("adminauthresponse")]
         public HttpResponseMessage AdminAuthRedirect(FormDataCollection formData)
         {

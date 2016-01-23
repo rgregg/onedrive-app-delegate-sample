@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Tenant Users</title>
+    <meta charset="utf-8"/>
+    <script src="jquery-2.2.0.min.js"></script>
+</head>
+<body>
+<h2>Tenant Users</h2>
+    <div><a href="default.aspx?logout=1">Sign out</a></div>
+    <div id="loading">Loading users from Microsoft Graph...</div>
+<ul id="userList">
+    
+</ul>
+
+<script>
+
+    function parseUserData(data, textStatus, jqXHR)
+    {
+        var items = [];
+        $.each(data.value, function(i, item)
+        {
+            items.push('<li><a href="DriveContents.html?userUpn=' + encodeURIComponent(item.userPrincipalName) + '&driveId=' + item.id + '">' + item.displayName + ' (' + item.userPrincipalName + ')</a></li>');
+        });
+        $("#userList").append(items.join(''));
+        $("#loading").hide();
+    }
+
+    function loadUsers(url)
+    {
+        $.ajax(url, {
+            success: parseUserData,
+            error: function (jqXHR, textStatus, errorThrow) {
+                window.location.href = "default.aspx?error=" + encodeURIComponent(textStatus);
+            }
+        });
+    }
+
+    loadUsers("/api/users");
+
+</script>
+
+</body>
+</html>

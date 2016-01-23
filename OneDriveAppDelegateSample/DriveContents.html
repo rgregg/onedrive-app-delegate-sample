@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Browse OneDrive for Business Contents</title>
+    <meta charset="utf-8" />
+    <script src="jquery-2.2.0.min.js"></script>
+</head>
+<body>
+    <h2>Drive Contents</h2>
+    <div id="gotoUsers"><a href="Users.html">Back to users</a></div>
+    <div><a href="default.aspx?logout=1">Sign out</a></div>
+    <div><a id="gotoParent" href="DriveContents.html?userUpn=&driveId=&itemId=">Up to Parent</a></div>
+
+    <h3 id="currentPath"></h3>
+    <ul id="driveItems"></ul>
+    <div id="loading">Loading contents from Microsoft Graph...</div>
+
+    <script>
+
+    function parseUserData(data, textStatus, jqXHR)
+    {
+        var items = [];
+        var driveId = getParameterByName("driveId");
+        var userUpn = encodeURIComponent(getParameterByName("userUpn"));
+
+        $.each(data.children, function(i, item)
+        {
+            if (item.folder)
+            {
+                items.push('<li><a href="DriveContents.html?userUpn=' + userUpn + '&driveId=' + driveId + '&itemId=' + encodeURIComponent(item.id) + '">' + item.name + '</a></li>');
+            }
+            else if (item.file)
+            {
+                items.push('<li><a href="' + item["@content.downloadUrl"] + '">' + item.name + ' (size: ' + item.size + ')</a></li>');
+            }
+        }); // end each
+
+        if (data.children.length == 0)
+        {
+            $("#driveItems").append('<li>No items were found in this folder.</li>');
+        }
+
+        var parentLink = $("#gotoParent");
+        var currentPath = $("#currentPath");
+        if (data.parentReference)
+        {
+            parentLink.prop("href", "DriveContents.html?userUpn=" + userUpn + "&driveId=" + driveId + "&itemId=" + encodeURIComponent(data.parentReference.id));
+            parentLink.show();
+            var path = data.parentReference.path;
+            var cutPoint = path.indexOf("/root:");
+            path = path.substring(cutPoint + 6);
+            currentPath.text(path + "/" + data.name);
+        }
+        else
+        {
+            parentLink.hide();
+            currentPath.text(data.name);
+        }
+
+        $("#driveItems").append(items.join(''));
+        $("#loading").hide();
+    }
+
+    function getParameterByName(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search);
+        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+
+    function loadDriveContent(url)
+    {
+        $.ajax(url, {
+            success: parseUserData,
+            error: function (jqXHR, textStatus, errorThrow)
+            {
+                window.location.href = "default.aspx?error=" + encodeURIComponent(textStatus);
+            }
+        });
+    }
+
+    var driveId = getParameterByName("driveId");
+    var userUpn = getParameterByName("userUpn");
+    var itemId = getParameterByName("itemId");
+    if (!itemId)
+        itemId = "root";
+    loadDriveContent("/api/spDriveContents?userUpn=" + userUpn + "&itemId=" + itemId);
+
+    </script>
+
+</body>
+</html>
