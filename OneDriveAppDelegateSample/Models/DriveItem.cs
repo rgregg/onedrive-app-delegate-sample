@@ -34,6 +34,31 @@ namespace OneDriveAppDelegateSample.Models
 
         [JsonProperty("parentReference", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public DriveItemReference ParentReference { get; set; }
+
+        [JsonProperty("createdDateTime")]
+        public DateTimeOffset CreatedDateTime
+        {
+            get; set;
+        }
+
+        [JsonProperty("lastModifiedDateTime")]
+        public DateTimeOffset LastModifiedDateTime
+        {
+            get; set;
+        }
+
+        [JsonProperty("permissions", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public Permission[] Permissions
+        {
+            get; set;
+        }
+
+        [JsonProperty("shared")]
+        public SharedFacet Shared
+        {
+            get; set;
+        }
+
     }
 
     public class FolderFacet
@@ -47,6 +72,36 @@ namespace OneDriveAppDelegateSample.Models
 
     }
 
+    public class IdentitySet
+    {
+        [JsonProperty("application", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public Identity Application
+        {
+            get; set;
+        }
+
+        [JsonProperty("user", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public Identity User
+        {
+            get; set;
+        }
+    }
+
+    public class Identity
+    {
+        [JsonProperty("displayName")]
+        public string DisplayName
+        {
+            get; set;
+        }
+
+        [JsonProperty("id")]
+        public string Id
+        {
+            get; set;
+        }
+    }
+
     public class DriveItemReference
     {
         [JsonProperty("driveId")]
@@ -57,6 +112,98 @@ namespace OneDriveAppDelegateSample.Models
 
         [JsonProperty("path")]
         public string Path { get; set; }
+    }
+
+    public class Permission
+    {
+        [JsonProperty("id")]
+        public string Id { get; set; }
+
+        [JsonProperty("roles")]
+        public string[] Roles { get; set; }
+
+        [JsonProperty("link", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public LinkFacet Link { get; set; }
+
+        [JsonProperty("grantedTo", DefaultValueHandling =DefaultValueHandling.Ignore)]
+        public IdentitySet GrantedTo { get; set; }
+
+    }
+
+    public class LinkFacet
+    {
+        /// <summary>
+        /// Scope for the sharingLink, either anonymous, or organization
+        /// </summary>
+        public string Scope
+        {
+            get; set;
+        }
+
+        /// <summary>
+        /// Type of sharing link, either view or edit
+        /// </summary>
+        public string Type
+        {
+            get; set;
+        }
+
+        /// <summary>
+        /// The actual sharing link URL
+        /// </summary>
+        public string webUrl
+        {
+            get; set;
+        }
+
+    }
+    
+
+    
+
+    public class SharedFacet
+    {
+        [JsonProperty("scope")]
+        public string Scope
+        {
+            get; set;
+        }
+
+        internal static SharedFacet CreateFromPermissions(Permission[] permissions)
+        {
+            if (null == permissions || permissions.Length == 0)
+                return null;
+
+            SharedFacet facet = new SharedFacet();
+            SharedScope discoveredScope = SharedScope.None;
+            foreach (var perm in permissions)
+            {
+                if (perm.Link != null && perm.Link.Scope == "organization")
+                {
+                    discoveredScope = (SharedScope.Tenant > discoveredScope) ? SharedScope.Tenant : discoveredScope;
+                }
+                else if (perm.Link != null && perm.Link.Scope == "anonymous")
+                {
+                    discoveredScope = (SharedScope.Anonymous > discoveredScope) ? SharedScope.Anonymous : discoveredScope;
+                }
+
+                if (perm.GrantedTo != null)
+                {
+                    discoveredScope = (SharedScope.Users > discoveredScope) ? SharedScope.Users : discoveredScope;
+                }
+            }
+
+            facet.Scope = discoveredScope.ToString().ToLower();
+            return facet;
+        }
+
+        private enum SharedScope
+        {
+            None = 0,
+            Users = 1,
+            Tenant = 2,
+            Anonymous = 3
+        }
     }
 
 

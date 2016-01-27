@@ -1,17 +1,34 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <title>Tenant Users</title>
+    <title>Tenant User List</title>
     <meta charset="utf-8"/>
     <script src="jquery-2.2.0.min.js"></script>
+    <link rel="stylesheet" href="http://appsforoffice.microsoft.com/fabric/1.0/fabric.min.css">
+    <link rel="stylesheet" href="http://appsforoffice.microsoft.com/fabric/1.0/fabric.components.min.css">
+    <link rel="stylesheet" href="Styles.css">
 </head>
 <body>
-<h2>Tenant Users</h2>
-    <div><a href="default.aspx?logout=1">Sign out</a></div>
-    <div id="loading">Loading users from Microsoft Graph...</div>
-<ul id="userList">
-    
-</ul>
+    <div class="ms-NavBar">
+        <div class="ms-NavBar-openMenu js-openMenu"></div>
+        <ul class="ms-NavBar-items">
+            <li class="ms-NavBar-item">
+                <a class="ms-NavBar-link" href="default.aspx">Home</a>
+            </li>
+            <li class="ms-NavBar-item">
+                <a class="ms-NavBar-link" href="Users.html"><i class="ms-Icon ms-Icon--people"></i>&nbsp;Tenant Users</a>
+            </li>
+            <li class="ms-NavBar-item ms-NavBar-item--right">
+                <a class="ms-NavBar-link" href="default.aspx?logout=1">Logout</a>
+            </li>
+        </ul>
+    </div>
+
+    <h2 class="ms-font-su">Tenant Users</h2>
+
+    <div id="loading" class="ms-font-m">Loading users from Microsoft Graph...</div>
+
+    <ul id="userList" class="ms-font-m-plus"></ul>
 
 <script>
 
@@ -20,7 +37,7 @@
         var items = [];
         $.each(data.value, function(i, item)
         {
-            items.push('<li><a href="DriveContents.html?userUpn=' + encodeURIComponent(item.userPrincipalName) + '&driveId=' + item.id + '">' + item.displayName + ' (' + item.userPrincipalName + ')</a></li>');
+            items.push('<li><a href="DriveContents.html?userUpn=' + encodeURIComponent(item.userPrincipalName) + '&driveId=' + item.id + '"><i class="ms-Icon ms-Icon--person" style="font-size:large" aria-hidden="true"></i>' + item.displayName + ' (' + item.userPrincipalName + ')</a></li>');
         });
         $("#userList").append(items.join(''));
         $("#loading").hide();
@@ -39,6 +56,6 @@
     loadUsers("/api/users");
 
 </script>
-
+<script src="fabric/Jquery.NavBar.js"></script>
 </body>
 </html>

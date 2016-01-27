@@ -57,14 +57,18 @@ namespace OneDriveAppDelegateSample
             var storedToken = Utility.TokenStore.TokenFromCookie(Request.Cookies);
             if (null == storedToken || string.IsNullOrEmpty(storedToken.TenantId))
             {
+                // User isn't signed in
                 signInLink.NavigateUrl = GenerateLoginUrl(useDogfood);
                 panelSignIn.Visible = true;
                 panelAuthenticated.Visible = false;
+                navBarMenu.Visible = false;
             }
             else
             {
+                // User is signed in!
                 panelSignIn.Visible = false;
                 panelAuthenticated.Visible = true;
+                navBarMenu.Visible = true;
             }
             labelServiceTarget.Text = "Target: " + (useDogfood ? "Dogfood" : "Production");
         }

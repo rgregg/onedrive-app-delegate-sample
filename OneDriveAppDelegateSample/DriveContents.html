@@ -4,18 +4,71 @@
     <title>Browse OneDrive for Business Contents</title>
     <meta charset="utf-8" />
     <script src="jquery-2.2.0.min.js"></script>
+    <link rel="stylesheet" href="http://appsforoffice.microsoft.com/fabric/1.0/fabric.min.css">
+    <link rel="stylesheet" href="http://appsforoffice.microsoft.com/fabric/1.0/fabric.components.min.css">
+    <link rel="stylesheet" href="Styles.css">
 </head>
 <body>
-    <h2>Drive Contents</h2>
-    <div id="gotoUsers"><a href="Users.html">Back to users</a></div>
-    <div><a href="default.aspx?logout=1">Sign out</a></div>
-    <div><a id="gotoParent" href="DriveContents.html?userUpn=&driveId=&itemId=">Up to Parent</a></div>
+    <div class="ms-NavBar">
+        <div class="ms-NavBar-openMenu js-openMenu"></div>
+        <ul class="ms-NavBar-items">
+            <li class="ms-NavBar-item">
+                <a class="ms-NavBar-link" href="default.aspx">Home</a>
+            </li>
+            <li class="ms-NavBar-item">
+                <a class="ms-NavBar-link" href="Users.html"><i class="ms-Icon ms-Icon--people"></i>&nbsp;Tenant Users</a>
+            </li>
+            <li class="ms-NavBar-item">
+                <a id="gotoParent" class="ms-NavBar-link" href="DriveContents.html?userUpn=&driveId=&itemId="><i class="ms-Icon ms-Icon--arrowUp2"></i>Up to Parent</a>
+            </li>
+            <li class="ms-NavBar-item ms-NavBar-item--right">
+                <a class="ms-NavBar-link" href="default.aspx?logout=1">Logout</a>
+            </li>
+        </ul>
+    </div>
 
-    <h3 id="currentPath"></h3>
-    <ul id="driveItems"></ul>
-    <div id="loading">Loading contents from Microsoft Graph...</div>
+    <h2 id="header" class="ms-font-xl">Drive Contents</h2>
+    <div></div>
+
+    <h3 id="currentPath" class="ms-font-l"></h3>
+    <div class="ms-Grid" id="driveItems">
+            
+    </div>
+    
+    <div id="loading" class="ms-font-m">Loading contents from Microsoft Graph...</div>
 
     <script>
+
+        function renderFile(userUpn, item) {
+            var sharedText = "";
+            var sharedCommands = "";
+            if (item.shared) {
+                sharedText = '<button class="ms-Button ms-Button--command"><span class="ms-Button-icon"><i class="ms-Icon ms-Icon--share"></i></span>&nbsp;<span class="ms-Button-label">Shared with ' + item.shared.scope + '</span></button>';
+                sharedCommands = '<button class="ms-Button ms-Button--command"><span class="ms-Button-icon"><i class="ms-Icon ms-Icon--xCircle"></i></span>&nbsp;<span class="ms-Button-label">Stop sharing</span></button>';
+            }
+
+            return '<div class="ms-Grid-row"> \
+                      <div class="ms-Grid-col ms-u-sm6 ms-font-m">\
+                        <a class="ms-Link" href="/api/download?userUpn=' + userUpn + '&fileId=' + encodeURIComponent(item.id) + '" title="' + 'Size: ' + item.size + ' bytes">\
+                            <i class="ms-Icon ms-Icon--fileDocument" style="font-size:large" aria-hidden="true"></i>&nbsp;' + item.name + '</a> \
+                      </div> \
+                      <div class="ms-Grid-col ms-u-sm6 ms-font-s">\
+                       ' + sharedText + sharedCommands + '   \
+                      </div>\
+                    </div>';
+        }
+
+        function renderFolder(userUpn, driveId, item) {
+            return '<div class="ms-Grid-row"> \
+                      <div class="ms-Grid-col ms-u-sm12 ms-font-m">\
+                        <a class="ms-Link" href="DriveContents.html?userUpn=' + userUpn + '&driveId=' + driveId + '&itemId=' + encodeURIComponent(item.id) + '">\
+                        <i class="ms-Icon ms-Icon--folder" style="font-size:large" aria-hidden="true"></i>&nbsp;' + item.name + '</a> \
+                      </div> \
+                    </div>';
+
+            return '<li></li>';
+        }
+
 
     function parseUserData(data, textStatus, jqXHR)
     {
@@ -27,17 +80,17 @@
         {
             if (item.folder)
             {
-                items.push('<li><a href="DriveContents.html?userUpn=' + userUpn + '&driveId=' + driveId + '&itemId=' + encodeURIComponent(item.id) + '">' + item.name + '</a></li>');
+                items.push(renderFolder(userUpn, driveId, item));
             }
             else if (item.file)
             {
-                items.push('<li><a href="' + item["@content.downloadUrl"] + '">' + item.name + ' (size: ' + item.size + ')</a></li>');
+                items.push(renderFile(userUpn, item));
             }
         }); // end each
 
         if (data.children.length == 0)
         {
-            $("#driveItems").append('<li>No items were found in this folder.</li>');
+            $("#driveItems").append('<div class="ms-font-xl">No items were found in this folder.</div>');
         }
 
         var parentLink = $("#gotoParent");
@@ -49,12 +102,12 @@
             var path = data.parentReference.path;
             var cutPoint = path.indexOf("/root:");
             path = path.substring(cutPoint + 6);
-            currentPath.text(path + "/" + data.name);
+            currentPath.text("OneDrive for Business " + path + "/" + data.name);
         }
         else
         {
             parentLink.hide();
-            currentPath.text(data.name);
+            currentPath.text("OneDrive for Business");
         }
 
         $("#driveItems").append(items.join(''));
@@ -70,6 +123,8 @@
 
     function loadDriveContent(url)
     {
+        $("#header").text("Drive Contents - " + getParameterByName("userUpn"));
+
         $.ajax(url, {
             success: parseUserData,
             error: function (jqXHR, textStatus, errorThrow)
@@ -87,6 +142,6 @@
     loadDriveContent("/api/spDriveContents?userUpn=" + userUpn + "&itemId=" + itemId);
 
     </script>
-
+    <script src="fabric/Jquery.NavBar.js"></script>
 </body>
 </html>

@@ -25,7 +25,7 @@ namespace OneDriveAppDelegateSample.Models
     public class GraphCollectionResponse<T> where T : class
     {
         [JsonProperty("value")]
-        public T[] Value { get; set; }
+        public List<T> Value { get; set; }
 
         [JsonProperty("@odata.nextLink", DefaultValueHandling=DefaultValueHandling.Ignore)]
         public string NextPageUrl { get; set; }

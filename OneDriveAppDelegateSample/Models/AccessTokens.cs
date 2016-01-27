@@ -12,7 +12,8 @@ namespace OneDriveAppDelegateSample.Models
 
         public OpenIdToken OpenId { get; private set; }
 
-        public string SharePointMySiteUrl { get; set; }
+        public string SharePointResourceUri { get; set; }
+        public string SharePointMySiteUri { get; set; }
 
         private Dictionary<string, CachedAccessToken> KnownAccessTokens { get; set; }
 
