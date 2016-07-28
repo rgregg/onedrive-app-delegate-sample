@@ -13,7 +13,7 @@ namespace OneDriveAppDelegateSample.Utility
     {
         public static async Task<Models.CachedAccessToken> GetAccessTokenAsync(string tenantId, string resource, bool useDogfood)
         {
-            IAppConfig app = useDogfood ? new DogfoodAppConfig() : new ProductionAppConfig();
+            IAppConfig app = /*useDogfood ? new DogfoodAppConfig() :*/ new ProductionAppConfig();
 
             string authority = app.AuthorizationServiceUri.Replace("common", tenantId);
             AuthenticationContext authContext = new AuthenticationContext(authority, false);

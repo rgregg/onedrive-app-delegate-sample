@@ -16,9 +16,9 @@ namespace OneDriveAppDelegateSample
 
     public class ProductionAppConfig : IAppConfig
     {
-        public virtual string ClientId { get { return "bd9da400-84c8-4ed5-9479-2f192b206f7c"; } }
+        public virtual string ClientId { get { return System.Configuration.ConfigurationManager.AppSettings["ClientAppId"]; } }
 
-        public virtual string ClientSecret { get { return "tB6PB/O/nyEUnMrj5WFVNWFOzOiM/g0ehEInpqA5mOI="; } }
+        public virtual string ClientSecret { get { return System.Configuration.ConfigurationManager.AppSettings["ClientAppSecret"]; } }
 
         public virtual string RedirectUri
         {
@@ -42,29 +42,5 @@ namespace OneDriveAppDelegateSample
             get { return "https://login.microsoftonline.com/common/oauth2/authorize"; }
         }
     }
-
-    public class DogfoodAppConfig : ProductionAppConfig
-    {
-        public override string ClientId
-        {
-            get { return "3c6a4be0-4de6-4ee7-a4ed-be4f18ebdbe7"; }
-        }
-
-        public override string ClientSecret
-        {
-            get { return "+BaW3T+OnCZVc4Lg79tByErPOaQRvKtJVnCQsAJcLU8="; }
-        }
-
-        public override string TokenServiceUri
-        {
-            get { return "https://login.windows-ppe.net/common/oauth2/token"; }
-        }
-
-        public override string AuthorizationServiceUri
-        {
-            get { return "https://login.windows-ppe.net/common/oauth2/authorize"; }
-        }
-    }
-
 
 }

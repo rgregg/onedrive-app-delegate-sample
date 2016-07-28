@@ -75,7 +75,7 @@ namespace OneDriveAppDelegateSample
 
         private string GenerateLoginUrl(bool useDogfood)
         {
-            IAppConfig app = useDogfood ? new DogfoodAppConfig() : new ProductionAppConfig();
+            IAppConfig app = /*useDogfood ? new DogfoodAppConfig() :*/ new ProductionAppConfig();
 
             var baseUrl = app.AuthorizationServiceUri;
             OAuth2.QueryStringBuilder builder = new OAuth2.QueryStringBuilder();
