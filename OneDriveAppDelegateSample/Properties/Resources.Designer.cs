@@ -59,15 +59,5 @@ namespace OneDriveAppDelegateSample.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] OneDriveAppCertPrivate {
-            get {
-                object obj = ResourceManager.GetObject("OneDriveAppCertPrivate", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }

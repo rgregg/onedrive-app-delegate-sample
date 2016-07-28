@@ -167,8 +167,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
-    <Content Include="Certs\OneDriveAppCert_Private.pfx" />
-    <Content Include="Certs\OneDriveAppCert_Public.cer" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
